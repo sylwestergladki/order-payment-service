@@ -1,10 +1,10 @@
-package pl.sylwestergladki.order_payment_service.controller;
+package pl.sylwestergladki.order_payment_service.order.OrderController;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-import pl.sylwestergladki.order_payment_service.dto.CreateOrderRequest;
-import pl.sylwestergladki.order_payment_service.model.Order;
-import pl.sylwestergladki.order_payment_service.service.OrderService;
+import pl.sylwestergladki.order_payment_service.order.dto.CreateOrderRequest;
+import pl.sylwestergladki.order_payment_service.order.Order.Order;
+import pl.sylwestergladki.order_payment_service.order.OrderService.OrderService;
 
 import java.util.List;
 

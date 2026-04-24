@@ -1,4 +1,4 @@
-package pl.sylwestergladki.order_payment_service.dto;
+package pl.sylwestergladki.order_payment_service.order.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
