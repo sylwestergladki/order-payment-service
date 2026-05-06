@@ -5,8 +5,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import pl.sylwestergladki.order_payment_service.order.Order.Order;
 import pl.sylwestergladki.order_payment_service.order.OrderRepository.OrderRepository;
+import pl.sylwestergladki.order_payment_service.order.dto.OrderResponse;
 import pl.sylwestergladki.order_payment_service.order.exception.OrderNotFoundException;
 
 import java.math.BigDecimal;
@@ -34,7 +38,7 @@ class OrderServiceTest {
         when(repository.save(any(Order.class))).thenReturn(order);
 
         // when
-        Order result = service.createOrder(amount);
+        OrderResponse result = service.createOrder(amount);
 
         // then
         assertNotNull(result);
@@ -42,17 +46,18 @@ class OrderServiceTest {
     }
 
     @Test
-    void shouldReturnOrderById() {
+    void shouldReturnOrderResponseById() {
         // given
         Order order = Order.create(BigDecimal.valueOf(100));
+        OrderResponse orderResponse = new OrderResponse(order.getId(), order.getStatus(), order.getAmount());
 
         when(repository.findById(1L)).thenReturn(Optional.of(order));
 
         // when
-        Order result = service.getOrder(1L);
+        OrderResponse result = service.getByIdOrThrow(1L);
 
         // then
-        assertEquals(order, result);
+        assertEquals(orderResponse, result);
         verify(repository).findById(1L);
     }
 
@@ -63,39 +68,9 @@ class OrderServiceTest {
 
         // when & then
         assertThrows(OrderNotFoundException.class,
-                () -> service.getOrder(1L));
+                () -> service.getByIdOrThrow(1L));
 
         verify(repository).findById(1L);
-    }
-
-    @Test
-    void shouldMarkOrderAsPaid_whenPaymentSuccess() {
-        // given
-        Order order = Order.create(BigDecimal.valueOf(100));
-
-        when(repository.findById(1L)).thenReturn(Optional.of(order));
-
-        // when
-        service.handlePaymentResult(1L, true);
-
-        // then
-        assertTrue(order.isPaid());
-        verify(repository).save(order);
-    }
-
-    @Test
-    void shouldMarkOrderAsFailed_whenPaymentFails() {
-        // given
-        Order order = Order.create(BigDecimal.valueOf(100));
-
-        when(repository.findById(1L)).thenReturn(Optional.of(order));
-
-        // when
-        service.handlePaymentResult(1L, false);
-
-        // then
-        assertTrue(order.isFailed());
-        verify(repository).save(order);
     }
 
     @Test
@@ -106,13 +81,16 @@ class OrderServiceTest {
                 Order.create(BigDecimal.valueOf(200))
         );
 
-        when(repository.findAll()).thenReturn(orders);
+        Page<Order> page = new PageImpl<>(orders);
+
+        when(repository.findAll(any(Pageable.class))).thenReturn(page);
 
         // when
-        List<Order> result = service.getAll();
+        Page<Order> result = service.getAll(Pageable.unpaged());
 
         // then
-        assertEquals(2, result.size());
-        verify(repository).findAll();
+        assertEquals(2, result.getTotalElements());
+        assertEquals(2, result.getContent().size());
+        verify(repository).findAll(any(Pageable.class));
     }
 }

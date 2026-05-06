@@ -5,11 +5,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import pl.sylwestergladki.order_payment_service.order.Order.Order;
+import pl.sylwestergladki.order_payment_service.order.Order.OrderStatus;
 import pl.sylwestergladki.order_payment_service.order.OrderService.OrderService;
 import pl.sylwestergladki.order_payment_service.order.dto.CreateOrderRequest;
+import pl.sylwestergladki.order_payment_service.order.dto.OrderResponse;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -36,11 +41,11 @@ class OrderControllerTest {
         BigDecimal amount = BigDecimal.valueOf(100);
         CreateOrderRequest request = new CreateOrderRequest(amount);
 
-        Order order = new Order();
-        order.setId(1L);
-        order.setAmount(amount);
+        OrderResponse orderResponse =
+                new OrderResponse(1L, OrderStatus.NEW, amount);
 
-        when(service.createOrder(amount)).thenReturn(order);
+
+        when(service.createOrder(amount)).thenReturn(orderResponse);
 
         // when & then
         mockMvc.perform(post("/orders")
@@ -57,18 +62,22 @@ class OrderControllerTest {
     void shouldGetAllOrders() throws Exception {
         // given
         Order order1 = new Order();
+        order1.setId(1L);
         order1.setAmount(BigDecimal.valueOf(100));
-        Order order2 = new Order();
-        order2.setAmount(BigDecimal.valueOf(200));
-        List<Order> orders = List.of(order1, order2);
 
-        when(service.getAll()).thenReturn(orders);
+        Order order2 = new Order();
+        order2.setId(2L);
+        order2.setAmount(BigDecimal.valueOf(200));
+
+        Page<Order> page = new PageImpl<>(List.of(order1, order2));
+
+        when(service.getAll(any(Pageable.class))).thenReturn(page);
 
         // when & then
         mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].amount").value(100))
-                .andExpect(jsonPath("$[1].amount").value(200));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].amount").value(100))
+                .andExpect(jsonPath("$.content[1].amount").value(200));
     }
 }

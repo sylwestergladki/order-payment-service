@@ -31,6 +31,7 @@ public class Order {
         Order order = new Order();
         order.amount = amount;
         order.status = OrderStatus.NEW;
+        order.createdAt = LocalDateTime.now();
         return order;
     }
 
