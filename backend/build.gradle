@@ -1,0 +1,18 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    group = 'pl.sylwestergladki'
+    version = '1.0.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    sourceCompatibility = '21'
+}
