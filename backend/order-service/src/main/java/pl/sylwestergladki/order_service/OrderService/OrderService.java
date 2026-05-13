@@ -14,7 +14,7 @@ import pl.sylwestergladki.order_service.kafka.event.OrderCreatedEvent;
 import pl.sylwestergladki.order_service.kafka.event.PaymentFailedEvent;
 import pl.sylwestergladki.order_service.kafka.event.PaymentSucceededEvent;
 import pl.sylwestergladki.order_service.exception.OrderNotFoundException;
-import pl.sylwestergladki.order_service.kafka.OrderEventPublisher;
+import pl.sylwestergladki.order_service.kafka.producer.OrderEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -45,16 +45,6 @@ public class OrderService {
         return new OrderResponse(savedOrder.getId(), savedOrder.getStatus(), savedOrder.getAmount());
     }
 
-//    @KafkaListener(topics = "payment-succeeded")
-//    public void handle(PaymentSucceededEvent event) {
-//        orderService.markAsPaid(event.orderId());
-//    }
-
-//    @KafkaListener(topics = "payment-failed")
-//    public void handle(PaymentFailedEvent event) {
-//        orderService.markAsFailed(event.orderId());
-//    }
-
     public Page<Order> getAll(Pageable pageable) {
         return repository.findAll(pageable);
     }
@@ -68,24 +58,24 @@ public class OrderService {
         return new OrderResponse(order.getId(),order.getStatus(), order.getAmount());
     }
 
-    @KafkaListener(topics = "payment-succeeded")
-    public void handle(PaymentSucceededEvent event){
-        Order order = repository.findById(event.orderId())
-                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
-
-        order.markAsPaid();
-
-        repository.save(order);
-    }
-
-    public void handle(PaymentFailedEvent event){
-        Order order = repository.findById(event.orderId())
-                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
-
-        order.markAsFailed();
-
-        repository.save(order);
-    }
+//    @KafkaListener(topics = "payment-succeeded")
+//    public void handle(PaymentSucceededEvent event){
+//        Order order = repository.findById(event.orderId())
+//                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
+//
+//        order.markAsPaid();
+//
+//        repository.save(order);
+//    }
+//
+//    public void handle(PaymentFailedEvent event){
+//        Order order = repository.findById(event.orderId())
+//                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
+//
+//        order.markAsFailed();
+//
+//        repository.save(order);
+//    }
 
 
 }

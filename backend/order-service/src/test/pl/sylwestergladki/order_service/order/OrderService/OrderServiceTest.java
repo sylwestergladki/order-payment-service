@@ -14,7 +14,7 @@ import pl.sylwestergladki.order_service.OrderRepository.OrderRepository;
 import pl.sylwestergladki.order_service.OrderService.OrderService;
 import pl.sylwestergladki.order_service.dto.OrderResponse;
 import pl.sylwestergladki.order_service.exception.OrderNotFoundException;
-import pl.sylwestergladki.order_service.kafka.OrderEventPublisher;
+import pl.sylwestergladki.order_service.kafka.producer.OrderEventPublisher;
 import pl.sylwestergladki.order_service.kafka.event.OrderCreatedEvent;
 
 

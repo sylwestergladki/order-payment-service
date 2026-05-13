@@ -1,4 +1,4 @@
-package pl.sylwestergladki.order_service.kafka;
+package pl.sylwestergladki.order_service.kafka.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
