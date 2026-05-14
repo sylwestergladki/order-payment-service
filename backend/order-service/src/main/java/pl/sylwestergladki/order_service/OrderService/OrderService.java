@@ -58,24 +58,23 @@ public class OrderService {
         return new OrderResponse(order.getId(),order.getStatus(), order.getAmount());
     }
 
-//    @KafkaListener(topics = "payment-succeeded")
-//    public void handle(PaymentSucceededEvent event){
-//        Order order = repository.findById(event.orderId())
-//                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
-//
-//        order.markAsPaid();
-//
-//        repository.save(order);
-//    }
-//
-//    public void handle(PaymentFailedEvent event){
-//        Order order = repository.findById(event.orderId())
-//                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
-//
-//        order.markAsFailed();
-//
-//        repository.save(order);
-//    }
+    public void handle(PaymentSucceededEvent event){
+        Order order = repository.findById(event.orderId())
+                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
+
+        order.markAsPaid();
+
+        repository.save(order);
+    }
+
+    public void handle(PaymentFailedEvent event){
+        Order order = repository.findById(event.orderId())
+                .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
+
+        order.markAsFailed();
+
+        repository.save(order);
+    }
 
 
 }

@@ -26,8 +26,7 @@ dependencies {
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 	implementation("org.springframework.kafka:spring-kafka")
 
-
-	runtimeOnly("com.h2database:h2")
+	runtimeOnly("org.postgresql:postgresql:42.7.3")
 
 	compileOnly("org.projectlombok:lombok:1.18.32")
 	annotationProcessor("org.projectlombok:lombok:1.18.32")

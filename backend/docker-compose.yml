@@ -33,3 +33,16 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+  postgres:
+    image: postgres:17
+    container_name: order-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_USER: order
+      POSTGRES_PASSWORD: order
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

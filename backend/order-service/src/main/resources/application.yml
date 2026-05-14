@@ -9,7 +9,15 @@ spring:
         redis:
             host: localhost
             port: 6379
-
+    datasource:
+        url: jdbc:postgresql://localhost:5432/orderdb
+        username: order
+        password: order
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        show-sql: true
+        hibernate:
+            ddl-auto: update
     kafka:
         bootstrap-servers: localhost:9092
 

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "customer_order")
 public class Order {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private BigDecimal amount;
