@@ -43,6 +43,19 @@ services:
       POSTGRES_USER: order
       POSTGRES_PASSWORD: order
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-order:/var/lib/postgresql/data
+  payment-postgres:
+    image: postgres:17
+    container_name: payment-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment
+    volumes:
+      - pgdata-payment:/var/lib/postgresql/data
+
 volumes:
-  pgdata:
+  pgdata-order:
+  pgdata-payment:

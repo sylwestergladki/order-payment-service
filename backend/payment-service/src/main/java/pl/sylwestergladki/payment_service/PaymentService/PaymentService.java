@@ -13,6 +13,8 @@ import pl.sylwestergladki.payment_service.kafka.event.OrderCreatedEvent;
 import pl.sylwestergladki.payment_service.kafka.event.PaymentFailedEvent;
 import pl.sylwestergladki.payment_service.kafka.event.PaymentSucceededEvent;
 
+import java.time.LocalDateTime;
+
 @Service
 public class PaymentService {
 
@@ -57,16 +59,20 @@ public class PaymentService {
         if(success){
             payment.markSuccess();
             publisher.publishSuccess(
-                    new PaymentSucceededEvent(payment.getOrderId())
+                    new PaymentSucceededEvent(payment.getOrderId(), LocalDateTime.now())
             );
         }else{
             payment.markFailed();
-            publisher.publishFailure(new PaymentFailedEvent(payment.getOrderId(), "Card declined"));
+            publisher.publishFailure(new PaymentFailedEvent(payment.getOrderId(),
+                    "Card declined",
+                            LocalDateTime.now()
+            ));
         }
+        paymentRepository.save(payment);
 
     }
 
     private boolean simulateGateway() {
-        return true;
+        return false;
     }
 }
