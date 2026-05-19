@@ -1,4 +1,6 @@
 package pl.sylwestergladki.order_service.kafka.event;
 
-public record PaymentSucceededEvent(Long orderId) {
+import java.time.LocalDateTime;
+
+public record PaymentSucceededEvent(Long orderId, LocalDateTime successTime) {
 }

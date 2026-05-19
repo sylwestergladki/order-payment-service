@@ -35,11 +35,13 @@ public class Order {
         return order;
     }
 
-    public void markAsPaid() {
+    public void markAsPaid(LocalDateTime paidAt) {
+        this.paidAt = paidAt;
         this.status = OrderStatus.PAID;
     }
 
-    public void markAsFailed() {
+    public void markAsFailed(LocalDateTime failedAt) {
+        this.failedAt = failedAt;
         this.status = OrderStatus.FAILED;
     }
 

@@ -62,7 +62,7 @@ public class OrderService {
         Order order = repository.findById(event.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
 
-        order.markAsPaid();
+        order.markAsPaid(event.successTime());
 
         repository.save(order);
     }
@@ -71,7 +71,7 @@ public class OrderService {
         Order order = repository.findById(event.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(event.orderId()));
 
-        order.markAsFailed();
+        order.markAsFailed(event.failedTime());
 
         repository.save(order);
     }

@@ -1,0 +1,59 @@
+MVP
+Client -> Order Service
+       -> creates order
+       -> publishes ORDER_CREATED event
+
+Payment Service
+       -> consumes event
+       -> processes payment
+       -> publishes PAYMENT_COMPLETED
+
+Order Service
+       -> updates order status
+
+
+# Async Communication
+- Apache Kafka
+- Spring Kafka
+## Use events like:
+- ORDER_CREATED
+- PAYMENT_COMPLETED
+- PAYMENT_FAILED
+
+# Caching
+## Redis
+Good MVP use cases:
+- cache order lookup
+- idempotency tokens
+- payment session cache
+
+Recommended MVP Scope
+
+# Keep MVP to:
+## MUST HAVE
+- 2 services
+- Kafka communication
+- PostgreSQL
+- Redis
+- integration tests
+- Docker Compose
+**NICE TO HAVE**
+- DLQ
+- retries
+- metrics
+- tracing
+----
+:TODO
+1. Add database for payment service - DONE
+2. Add unit tests for payment service -
+3. Implement more pattern of microservices and eda in project
+MUST HAVE:
+Saga (choreography)
+Idempotency
+Outbox (bardzo polecam)
+Retry + DLT
+Correlation ID
+NICE TO HAVE:
+CQRS
+Event versioning
+ACL
