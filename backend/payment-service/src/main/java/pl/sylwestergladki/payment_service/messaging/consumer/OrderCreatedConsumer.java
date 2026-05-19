@@ -1,11 +1,11 @@
-package pl.sylwestergladki.payment_service.kafka.consumer;
+package pl.sylwestergladki.payment_service.messaging.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import pl.sylwestergladki.payment_service.PaymentService.PaymentService;
-import pl.sylwestergladki.payment_service.kafka.event.OrderCreatedEvent;
+import pl.sylwestergladki.payment_service.payment.application.PaymentService;
+import pl.sylwestergladki.payment_service.messaging.event.OrderCreatedEvent;
 
 @Component
 @RequiredArgsConstructor

@@ -1,8 +1,8 @@
-package pl.sylwestergladki.payment_service.PaymentRepository;
+package pl.sylwestergladki.payment_service.payment.infrastructure.persistance;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import pl.sylwestergladki.payment_service.Payment.Payment;
+import pl.sylwestergladki.payment_service.payment.domain.Payment;
 
 
 @Repository

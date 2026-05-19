@@ -1,11 +1,10 @@
-package pl.sylwestergladki.payment_service.Payment;
+package pl.sylwestergladki.payment_service.payment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.Data;
-import pl.sylwestergladki.payment_service.PaymentStatus.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package pl.sylwestergladki.payment_service.kafka.event;
+package pl.sylwestergladki.payment_service.messaging.event;
 
 import java.time.LocalDateTime;
 
