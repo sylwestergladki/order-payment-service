@@ -1,9 +1,9 @@
 package pl.sylwestergladki.payment_service.messaging.event;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record PaymentSucceededEvent(
         Long orderId,
-        LocalDateTime successTime
+        Instant successTime
 ) {
 }

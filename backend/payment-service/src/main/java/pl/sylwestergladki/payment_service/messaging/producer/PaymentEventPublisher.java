@@ -6,31 +6,28 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import pl.sylwestergladki.payment_service.messaging.event.PaymentFailedEvent;
 import pl.sylwestergladki.payment_service.messaging.event.PaymentSucceededEvent;
+import pl.sylwestergladki.payment_service.outbox.application.EventPublisher;
 
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentEventPublisher {
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+public class PaymentEventPublisher implements EventPublisher {
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public void publishSuccess(PaymentSucceededEvent event){
-        log.info("Publishing payment-succeeded event: {}", event);
+    @Override
+    public void publish(String eventType, String key, String payload) {
+        log.info(
+                "Publishing event type={} key={}",
+                eventType,
+                key
+        );
 
         kafkaTemplate.send(
-                "payment-succeeded",
-                event.orderId().toString(),
-                event
+                eventType,
+                key,
+                payload
         );
     }
 
-    public void publishFailure(PaymentFailedEvent event){
-        log.info("Publishing payment-failed event: {}", event);
-
-        kafkaTemplate.send(
-                "payment-failed",
-                event.orderId().toString(),
-                event
-        );
-    }
 }

@@ -1,50 +1,65 @@
 package pl.sylwestergladki.payment_service.outbox.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.UUID;
+
 
 @Entity
-@Table(name = "outbox_event")
+@Table(
+        name = "outbox_events",
+        indexes = {
+                @Index(
+                        name = "idx_outbox_status_retry",
+                        columnList = "status,nextRetryAt"
+                ),
+                @Index(
+                        name = "idx_outbox_created_at",
+                        columnList = "createdAt"
+                )
+        }
+)
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class OutboxEvent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
+    @Column(nullable = false)
     private String aggregateType;
+
+    @Column(nullable = false)
     private String aggregateId;
-    @Getter
+
+    @Column(nullable = false)
     private String eventType;
 
-    @Getter
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
-    private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OutboxStatus status;
 
-    private boolean published;
+    @Column(nullable = false)
+    private Integer attempts;
 
-    private LocalDateTime publishedAt;
+    @Column(nullable = false)
+    private Instant createdAt;
 
-    protected OutboxEvent() {}
+    private Instant publishedAt;
 
-    public OutboxEvent(String aggregateType,
-                       String aggregateId,
-                       String eventType,
-                       String payload) {
-        this.aggregateType = aggregateType;
-        this.aggregateId = aggregateId;
-        this.eventType = eventType;
-        this.payload = payload;
-        this.createdAt = LocalDateTime.now();
-        this.published = false;
-    }
+    @Column(nullable = false)
+    private Instant nextRetryAt;
 
-    public void markPublished() {
-        this.published = true;
-        this.publishedAt = LocalDateTime.now();
-    }
+    @Column(columnDefinition = "TEXT")
+    private String lastError;
 
 }
