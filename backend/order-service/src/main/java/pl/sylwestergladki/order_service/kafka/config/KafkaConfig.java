@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import pl.sylwestergladki.order_service.kafka.event.PaymentFailedEvent;
@@ -52,19 +53,58 @@ public class KafkaConfig {
 
     private <T> ConsumerFactory<String, T> createFactory(Class<T> type) {
 
-        JsonDeserializer<T> deserializer = new JsonDeserializer<>(type, false);
-        deserializer.setRemoveTypeHeaders(true);
-        deserializer.setUseTypeHeaders(false);
-
-        deserializer.addTrustedPackages("pl.sylwestergladki.order_service.kafka.event");
-
         Map<String, Object> config = new HashMap<>();
 
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "order-group");
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9092"
+        );
 
-        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
+        config.put(
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "order-group"
+        );
+
+        config.put(
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                "earliest"
+        );
+
+        config.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                ErrorHandlingDeserializer.class
+        );
+
+        config.put(
+                ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS,
+                StringDeserializer.class
+        );
+
+        config.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                ErrorHandlingDeserializer.class
+        );
+
+        config.put(
+                ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS,
+                JsonDeserializer.class
+        );
+
+        config.put(
+                JsonDeserializer.VALUE_DEFAULT_TYPE,
+                type.getName()
+        );
+
+        config.put(
+                JsonDeserializer.TRUSTED_PACKAGES,
+                "pl.sylwestergladki.order_service.kafka.event"
+        );
+
+        config.put(
+                JsonDeserializer.USE_TYPE_INFO_HEADERS,
+                false
+        );
+        return new DefaultKafkaConsumerFactory<>(config);
     }
 
     @Bean
