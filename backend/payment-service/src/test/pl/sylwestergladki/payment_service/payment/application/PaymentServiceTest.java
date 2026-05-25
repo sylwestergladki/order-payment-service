@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.sylwestergladki.payment_service.messaging.event.OrderCreatedEvent;
+import pl.sylwestergladki.payment_service.outbox.application.OutboxEventFactory;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxEvent;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxRepository;
 import pl.sylwestergladki.payment_service.payment.application.dto.PaymentResponse;
@@ -35,6 +36,9 @@ class PaymentServiceTest {
 
     @Mock
     private OutboxRepository outboxRepository;
+
+    @Mock
+    private OutboxEventFactory outboxEventFactory;
 
     @Mock
     private PaymentGateway gateway;
@@ -73,6 +77,20 @@ class PaymentServiceTest {
         when(paymentRepository.existsByIdempotencyKey("idem-key"))
                 .thenReturn(false);
 
+        when(paymentRepository.save(any(Payment.class)))
+                .thenAnswer(invocation -> {
+                    Payment payment = invocation.getArgument(0);
+                    payment.setId(1L);
+                    return payment;
+                });
+
+        when(outboxEventFactory.create(
+                any(),
+                any(),
+                any(),
+                any()
+        )).thenReturn(new OutboxEvent());
+
         when(gateway.charge())
                 .thenReturn(true);
 
@@ -91,6 +109,20 @@ class PaymentServiceTest {
 
         when(paymentRepository.existsByIdempotencyKey("idem-key"))
                 .thenReturn(false);
+
+        when(paymentRepository.save(any(Payment.class)))
+                .thenAnswer(invocation -> {
+                    Payment payment = invocation.getArgument(0);
+                    payment.setId(1L);
+                    return payment;
+                });
+
+        when(outboxEventFactory.create(
+                any(),
+                any(),
+                any(),
+                any()
+        )).thenReturn(new OutboxEvent());
 
         when(gateway.charge())
                 .thenReturn(false);
