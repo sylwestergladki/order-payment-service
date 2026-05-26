@@ -1,16 +1,15 @@
 package pl.sylwestergladki.payment_service.outbox.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import pl.sylwestergladki.payment_service.messaging.producer.PaymentEventPublisher;
-import pl.sylwestergladki.payment_service.outbox.domain.OutboxRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 @Slf4j
 @Component
@@ -21,13 +20,16 @@ public class OutboxScheduler {
 
     private final OutboxBatchService batchService;
     private final OutboxPublisherService publisherService;
+    private final ExecutorService outboxExecutor;
 
     @Scheduled(fixedDelay = 5000)
     public void processOutbox() {
 
-        List<UUID> eventIds = batchService.lockBatch(BATCH_SIZE);
+        long start = System.currentTimeMillis();
+        List<UUID> eventIds = batchService.fetchLockedBatch(BATCH_SIZE);
 
         if (eventIds.isEmpty()) {
+            log.debug("Outbox empty");
             return;
         }
 
@@ -36,20 +38,19 @@ public class OutboxScheduler {
                 eventIds.size()
         );
 
-        for (UUID eventId : eventIds) {
+        List<Future<?>> futures = new ArrayList<>();
 
-            try {
-
-                publisherService.publishSingleEvent(eventId);
-
-            } catch (Exception e) {
-
-                log.error(
-                        "Unexpected scheduler error for event={}",
-                        eventId,
-                        e
-                );
-            }
+        for(UUID eventId : eventIds) {
+            Future<?> future = outboxExecutor.submit(() ->{
+               try {
+                   publisherService.publishSingleEvent(eventId);
+               }catch (Exception e) {
+                   log.error("Failed event {}", eventId, e);
+               }
+            });
+            futures.add(future);
         }
+
+        log.info("Outbox batch processed in {} ms", System.currentTimeMillis() - start);
     }
 }

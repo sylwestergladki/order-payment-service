@@ -15,7 +15,7 @@ public class OutboxBatchService {
     private final OutboxRepository repository;
 
     @Transactional
-    public List<UUID> lockBatch(int size) {
+    public List<UUID> fetchLockedBatch(int size) {
         return repository.lockNextBatch(size);
     }
 }
