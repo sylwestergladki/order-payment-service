@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -38,19 +39,22 @@ public class OutboxScheduler {
                 eventIds.size()
         );
 
-        List<Future<?>> futures = new ArrayList<>();
 
         for(UUID eventId : eventIds) {
-            Future<?> future = outboxExecutor.submit(() ->{
+            outboxExecutor.submit(() ->{
                try {
                    publisherService.publishSingleEvent(eventId);
                }catch (Exception e) {
                    log.error("Failed event {}", eventId, e);
                }
             });
-            futures.add(future);
         }
 
-        log.info("Outbox batch processed in {} ms", System.currentTimeMillis() - start);
+        log.info(
+                "Submitted {} events in {} ms",
+                eventIds.size(),
+                System.currentTimeMillis() - start
+        );
     }
+
 }
