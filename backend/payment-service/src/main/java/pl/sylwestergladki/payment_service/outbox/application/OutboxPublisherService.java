@@ -20,6 +20,7 @@ public class OutboxPublisherService {
 
     private final OutboxRepository repository;
     private final EventPublisher eventPublisher;
+    private final DeadLetterPublisher deadLetterPublisher;
 
     @Transactional
     public void publishSingleEvent(UUID eventId) {
@@ -56,9 +57,12 @@ public class OutboxPublisherService {
             event.setLastError(e.getMessage());
 
             if (attempts >= MAX_RETRIES) {
-
-                event.setStatus(OutboxStatus.FAILED);
-
+                event.setStatus(OutboxStatus.DEAD_LETTER);
+                try{
+                    deadLetterPublisher.publish(event, e);
+                }catch (Exception dlqException) {
+                    log.error("Failed to publish DLQ event id={}", event.getId(), dlqException);
+                }
             } else {
 
                 event.setNextRetryAt(

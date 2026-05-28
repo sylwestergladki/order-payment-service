@@ -1,7 +1,6 @@
 package pl.sylwestergladki.payment_service.outbox.application;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxEvent;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxStatus;
 
@@ -22,7 +21,7 @@ class OutboxEventFactoryTest {
                 "{}"
         );
 
-        assertEquals(OutboxStatus.NEW, event.getStatus());
+        assertEquals(OutboxStatus.PENDING, event.getStatus());
         assertEquals(0, event.getAttempts());
 
         assertNotNull(event.getCreatedAt());

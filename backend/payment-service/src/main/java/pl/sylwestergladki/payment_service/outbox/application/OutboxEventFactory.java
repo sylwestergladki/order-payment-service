@@ -22,7 +22,7 @@ public class OutboxEventFactory {
                 .aggregateId(aggregateId)
                 .eventType(eventType)
                 .payload(payload)
-                .status(OutboxStatus.NEW)
+                .status(OutboxStatus.PENDING)
                 .attempts(0)
                 .createdAt(now)
                 .nextRetryAt(now.plusSeconds(0))

@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import pl.sylwestergladki.payment_service.messaging.event.PaymentFailedEvent;
-import pl.sylwestergladki.payment_service.messaging.event.PaymentSucceededEvent;
 import pl.sylwestergladki.payment_service.outbox.application.EventPublisher;
 
 
@@ -17,6 +15,7 @@ public class PaymentEventPublisher implements EventPublisher {
 
     @Override
     public void publish(String eventType, String key, String payload) {
+
         log.info(
                 "Publishing event type={} key={}",
                 eventType,

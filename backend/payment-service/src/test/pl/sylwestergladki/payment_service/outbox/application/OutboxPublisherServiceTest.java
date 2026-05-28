@@ -26,6 +26,9 @@ class OutboxPublisherServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
+    @Mock
+    private DeadLetterPublisher deadLetterPublisher;
+
     @InjectMocks
     private OutboxPublisherService outboxPublisherService;
 
@@ -77,7 +80,7 @@ class OutboxPublisherServiceTest {
 
         assertEquals("Kafka unavailable", event.getLastError());
 
-        assertEquals(OutboxStatus.NEW, event.getStatus());
+        assertEquals(OutboxStatus.PENDING, event.getStatus());
 
         assertNotNull(event.getNextRetryAt());
     }
@@ -99,7 +102,7 @@ class OutboxPublisherServiceTest {
 
         assertEquals(5, event.getAttempts());
 
-        assertEquals(OutboxStatus.FAILED, event.getStatus());
+        assertEquals(OutboxStatus.DEAD_LETTER, event.getStatus());
 
         assertEquals("Permanent failure", event.getLastError());
     }
@@ -140,10 +143,71 @@ class OutboxPublisherServiceTest {
                 .aggregateId("123")
                 .eventType("payment-failed")
                 .payload("{\"orderId\":13")
-                .status(OutboxStatus.NEW)
+                .status(OutboxStatus.PENDING)
                 .attempts(0)
                 .createdAt(now)
                 .nextRetryAt(now)
                 .build();
+    }
+
+    @Test
+    void shouldPublishToDlqAfterMaxRetries(){
+        OutboxEvent event = createEvent();
+        event.setAttempts(4);
+
+        when(outboxRepository.findByIdForUpdate(eventID))
+            .thenReturn(Optional.of(event));
+
+        doThrow(new RuntimeException("Permanent failure"))
+        .when(eventPublisher)
+                .publish(any(), any(), any());
+
+        outboxPublisherService.publishSingleEvent(eventID);
+        verify(deadLetterPublisher).publish(eq(event), any());
+
+        assertEquals(5, event.getAttempts());
+        assertEquals(OutboxStatus.DEAD_LETTER, event.getStatus());
+        assertEquals("Permanent failure", event.getLastError());
+    }
+
+    @Test
+    void shouldNotPublishDlqBeforeMaxRetries(){
+        OutboxEvent event = createEvent();
+        event.setAttempts(2);
+
+        when(outboxRepository.findByIdForUpdate(eventID))
+            .thenReturn(Optional.of(event));
+
+        doThrow(new RuntimeException("Kafka error"))
+            .when(eventPublisher)
+                .publish(any(), any(), any());
+
+        outboxPublisherService.publishSingleEvent(eventID);
+
+        verify(deadLetterPublisher, never()).publish(eq(event), any());
+
+        assertEquals(3, event.getAttempts());
+        assertEquals(OutboxStatus.PENDING, event.getStatus());
+    }
+
+    @Test
+    void shouldHandleDlqFailureGracefully(){
+        OutboxEvent event = createEvent();
+        event.setAttempts(4);
+
+        when(outboxRepository.findByIdForUpdate(eventID))
+            .thenReturn(Optional.of(event));
+
+        doThrow(new RuntimeException("Kafka down"))
+                .when(eventPublisher)
+                .publish(any(), any(), any());
+
+        doThrow(new RuntimeException("DLQ failed"))
+            .when(deadLetterPublisher).publish(any(), any());
+
+        outboxPublisherService.publishSingleEvent(eventID);
+
+        assertEquals(OutboxStatus.DEAD_LETTER, event.getStatus());
+        assertEquals(5, event.getAttempts());
     }
 }

@@ -1,7 +1,7 @@
 package pl.sylwestergladki.payment_service.outbox.domain;
 
 public enum OutboxStatus {
-    NEW,
+    PENDING,
     PUBLISHED,
-    FAILED
+    DEAD_LETTER
 }

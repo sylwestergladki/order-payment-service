@@ -14,7 +14,7 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, UUID> {
     @Query(value = """
         SELECT id
         FROM outbox_events
-        WHERE status = 'NEW'
+        WHERE status = 'PENDING'
           AND next_retry_at <= now()
         ORDER BY created_at
         LIMIT :limit
