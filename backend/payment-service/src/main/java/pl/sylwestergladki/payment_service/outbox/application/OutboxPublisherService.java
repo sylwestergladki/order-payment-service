@@ -8,8 +8,10 @@ import pl.sylwestergladki.payment_service.outbox.domain.OutboxEvent;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxRepository;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxStatus;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -17,10 +19,14 @@ import java.util.UUID;
 public class OutboxPublisherService {
 
     private static final int MAX_RETRIES = 5;
+    private static final long BASE_DELAY_SECONDS = 30;
+    private static final long MAX_DELAY_SECONDS = 900;
+    private static final double JITTER_FACTOR = 0.3;
 
     private final OutboxRepository repository;
     private final EventPublisher eventPublisher;
     private final DeadLetterPublisher deadLetterPublisher;
+    private final Clock clock;
 
     @Transactional
     public void publishSingleEvent(UUID eventId) {
@@ -41,7 +47,7 @@ public class OutboxPublisherService {
             );
 
             event.setStatus(OutboxStatus.PUBLISHED);
-            event.setPublishedAt(Instant.now());
+            event.setPublishedAt(Instant.now(clock));
 
             log.info(
                     "Published outbox event id={} type={}",
@@ -66,7 +72,7 @@ public class OutboxPublisherService {
             } else {
 
                 event.setNextRetryAt(
-                        Instant.now().plusSeconds(attempts * 30L)
+                        calculateNextRetry(attempts)
                 );
             }
 
@@ -77,5 +83,20 @@ public class OutboxPublisherService {
                     e
             );
         }
+    }
+
+    private Instant calculateNextRetry(int attempts){
+        long exponentialDelay =
+                (long) (BASE_DELAY_SECONDS * Math.pow(2, attempts-1));
+        long cappedDelay =
+                Math.min(exponentialDelay, MAX_DELAY_SECONDS);
+
+        double jitter =
+                ThreadLocalRandom.current()
+                        .nextDouble(1 - JITTER_FACTOR, 1 + JITTER_FACTOR);
+
+        long finalDelay = (long) (cappedDelay * jitter);
+
+        return Instant.now(clock).plusSeconds(finalDelay);
     }
 }
