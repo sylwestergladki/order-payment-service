@@ -11,6 +11,12 @@ spring:
         hibernate:
             ddl-auto: update
 
+outbox:
+    retry:
+        max-retries: 5
+        base-delay-seconds: 30
+        max-delay-seconds: 900
+        jitter-factor: 0.3
 
 server:
     port: 8082

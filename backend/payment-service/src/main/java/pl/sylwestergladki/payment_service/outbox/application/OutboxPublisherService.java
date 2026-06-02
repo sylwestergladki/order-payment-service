@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import pl.sylwestergladki.payment_service.outbox.config.OutboxRetryProperties;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxEvent;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxRepository;
 import pl.sylwestergladki.payment_service.outbox.domain.OutboxStatus;
@@ -18,11 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class OutboxPublisherService {
 
-    private static final int MAX_RETRIES = 5;
-    private static final long BASE_DELAY_SECONDS = 30;
-    private static final long MAX_DELAY_SECONDS = 900;
-    private static final double JITTER_FACTOR = 0.3;
-
+    private final OutboxRetryProperties retryProperties;
     private final OutboxRepository repository;
     private final EventPublisher eventPublisher;
     private final DeadLetterPublisher deadLetterPublisher;
@@ -62,7 +59,7 @@ public class OutboxPublisherService {
             event.setAttempts(attempts);
             event.setLastError(e.getMessage());
 
-            if (attempts >= MAX_RETRIES) {
+            if (attempts >= retryProperties.getMaxRetries()) {
                 event.setStatus(OutboxStatus.DEAD_LETTER);
                 try{
                     deadLetterPublisher.publish(event, e);
@@ -87,13 +84,14 @@ public class OutboxPublisherService {
 
     private Instant calculateNextRetry(int attempts){
         long exponentialDelay =
-                (long) (BASE_DELAY_SECONDS * Math.pow(2, attempts-1));
+                (long) (retryProperties.getBaseDelaySeconds() * Math.pow(2, attempts-1));
         long cappedDelay =
-                Math.min(exponentialDelay, MAX_DELAY_SECONDS);
+                Math.min(exponentialDelay, retryProperties.getMaxRetries());
 
         double jitter =
                 ThreadLocalRandom.current()
-                        .nextDouble(1 - JITTER_FACTOR, 1 + JITTER_FACTOR);
+                        .nextDouble(1 - retryProperties.getJitterFactor(),
+                                1 + retryProperties.getJitterFactor());
 
         long finalDelay = (long) (cappedDelay * jitter);
 
