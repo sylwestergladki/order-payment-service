@@ -86,7 +86,7 @@ public class OutboxPublisherService {
         long exponentialDelay =
                 (long) (retryProperties.getBaseDelaySeconds() * Math.pow(2, attempts-1));
         long cappedDelay =
-                Math.min(exponentialDelay, retryProperties.getMaxRetries());
+                Math.min(exponentialDelay, retryProperties.getMaxDelaySeconds());
 
         double jitter =
                 ThreadLocalRandom.current()
