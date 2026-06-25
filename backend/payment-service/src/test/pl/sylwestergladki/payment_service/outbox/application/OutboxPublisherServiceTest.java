@@ -31,6 +31,9 @@ class OutboxPublisherServiceTest {
     @Mock
     private DeadLetterPublisher deadLetterPublisher;
 
+    @Mock
+    private OutboxRetryProperties retryProperties;
+
     private OutboxPublisherService outboxPublisherService;
 
     private UUID eventID;
@@ -44,13 +47,6 @@ class OutboxPublisherServiceTest {
     @BeforeEach
     void setUp() {
         eventID = UUID.randomUUID();
-
-        OutboxRetryProperties retryProperties = new OutboxRetryProperties(
-                5,
-                30,
-                900,
-                0.3
-        );
 
         outboxPublisherService = new OutboxPublisherService(
                 retryProperties,
