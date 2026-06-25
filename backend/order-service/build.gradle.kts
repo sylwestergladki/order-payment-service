@@ -26,6 +26,10 @@ dependencies {
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 	implementation("org.springframework.kafka:spring-kafka")
 
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+
 	runtimeOnly("org.postgresql:postgresql:42.7.3")
 
 	compileOnly("org.projectlombok:lombok:1.18.32")

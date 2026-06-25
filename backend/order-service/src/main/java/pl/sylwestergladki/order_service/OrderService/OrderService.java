@@ -1,20 +1,23 @@
 package pl.sylwestergladki.order_service.OrderService;
 
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.sylwestergladki.order_service.Order.Order;
 import pl.sylwestergladki.order_service.OrderRepository.OrderRepository;
 import pl.sylwestergladki.order_service.dto.OrderResponse;
+import pl.sylwestergladki.order_service.exception.OrderNotFoundException;
 import pl.sylwestergladki.order_service.kafka.event.OrderCreatedEvent;
 import pl.sylwestergladki.order_service.kafka.event.PaymentFailedEvent;
 import pl.sylwestergladki.order_service.kafka.event.PaymentSucceededEvent;
-import pl.sylwestergladki.order_service.exception.OrderNotFoundException;
 import pl.sylwestergladki.order_service.kafka.producer.OrderEventPublisher;
+import pl.sylwestergladki.order_service.observability.metrics.OrderMetrics;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -24,25 +27,39 @@ public class OrderService {
 
     private final OrderRepository repository;
     private final OrderEventPublisher publisher;
+    private final OrderMetrics metrics;
 
-    public OrderService(OrderRepository repository, OrderEventPublisher publisher) {
+    public OrderService(OrderRepository repository,
+                        OrderEventPublisher publisher,
+                        OrderMetrics metrics) {
         this.repository = repository;
         this.publisher = publisher;
+        this.metrics = metrics;
     }
 
     @Transactional
     public OrderResponse createOrder(BigDecimal amount) {
-        Order order = Order.create(amount);
-        Order savedOrder = repository.save(order);
-        String idempotencyKey = UUID.randomUUID().toString();
-        publisher.publishOrderCreated(
-                new OrderCreatedEvent(
-                        order.getId(),
-                        order.getAmount(),
-                        idempotencyKey)
-        );
+        Timer.Sample sample = metrics.startCreateTimer();
 
-        return new OrderResponse(savedOrder.getId(), savedOrder.getStatus(), savedOrder.getAmount());
+        try {
+            Order order = Order.create(amount);
+            Order savedOrder = repository.save(order);
+
+            metrics.created();
+            String idempotencyKey = UUID.randomUUID().toString();
+            publisher.publishOrderCreated(
+                    new OrderCreatedEvent(
+                            order.getId(),
+                            order.getAmount(),
+                            idempotencyKey)
+            );
+            return new OrderResponse(savedOrder.getId(), savedOrder.getStatus(), savedOrder.getAmount());
+        }catch (Exception e) {
+            metrics.failed();
+            throw e;
+        }finally {
+            metrics.stopCreateTimer(sample);
+        }
     }
 
     public Page<Order> getAll(Pageable pageable) {
@@ -65,6 +82,7 @@ public class OrderService {
         order.markAsPaid(event.successTime());
 
         repository.save(order);
+        metrics.succeeded();
     }
 
     public void handle(PaymentFailedEvent event){
@@ -74,6 +92,7 @@ public class OrderService {
         order.markAsFailed(event.failedTime());
 
         repository.save(order);
+        metrics.failed();
     }
 
 
