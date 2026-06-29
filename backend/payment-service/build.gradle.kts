@@ -25,6 +25,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 	implementation("org.springframework.kafka:spring-kafka")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+
 
 	runtimeOnly("org.postgresql:postgresql:42.7.3")
 

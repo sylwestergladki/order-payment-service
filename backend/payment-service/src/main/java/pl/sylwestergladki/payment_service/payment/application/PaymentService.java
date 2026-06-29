@@ -2,6 +2,7 @@ package pl.sylwestergladki.payment_service.payment.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import pl.sylwestergladki.payment_service.payment.application.dto.PaymentRespons
 import pl.sylwestergladki.payment_service.payment.application.exception.PaymentNotFoundException;
 import pl.sylwestergladki.payment_service.payment.application.port.PaymentGateway;
 import pl.sylwestergladki.payment_service.payment.domain.Payment;
+import pl.sylwestergladki.payment_service.payment.infrastructure.observability.metrics.PaymentMetrics;
 import pl.sylwestergladki.payment_service.payment.infrastructure.persistance.PaymentRepository;
 
 import java.time.Instant;
@@ -27,6 +29,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentGateway gateway;
+    private final PaymentMetrics metrics;
 
     private final OutboxRepository outboxRepository;
     private final OutboxEventFactory outboxEventFactory;
@@ -46,54 +49,58 @@ public class PaymentService {
 
     @Transactional
     public void process(OrderCreatedEvent event) {
-        boolean exists = paymentRepository.existsByIdempotencyKey(
-                event.idempotencyKey()
-        );
+        Timer.Sample sample = metrics.startProcessingTimer();
 
-        if(exists){
-            return;
-        }
-
-        Payment payment = Payment.create(
-                event.orderId(),
-                event.amount(),
-                event.idempotencyKey()
-        );
-
-        paymentRepository.save(payment);
-
-        boolean success = gateway.charge();
-
-        Instant now = Instant.now();
-
-        if(success){
-            payment.markSuccess();
-
-            PaymentSucceededEvent integrationEvent =
-                    new PaymentSucceededEvent(
-                            payment.getOrderId(),
-                            now
-                    );
-
-            saveOutbox(
-                    integrationEvent,
-                    payment.getId().toString(),
-                    "payment-succeeded"
+        try {
+            boolean exists = paymentRepository
+                    .existsByIdempotencyKey(event.idempotencyKey());
+            if(exists){
+                return;
+            }
+            Payment payment = Payment.create(
+                    event.orderId(),
+                    event.amount(),
+                    event.idempotencyKey()
             );
-        }else{
-            payment.markFailed();
-            PaymentFailedEvent integrationEvent =
-                    new PaymentFailedEvent(
-                            payment.getOrderId(),
-                            "Card declined",
-                            now
-                    );
+            paymentRepository.save(payment);
 
-            saveOutbox(
-                    integrationEvent,
-                    payment.getId().toString(),
-                    "payment-failed"
-            );
+            boolean success = gateway.charge();
+
+            Instant now = Instant.now();
+
+            if(success){
+                payment.markSuccess();
+                PaymentSucceededEvent integrationEvent =
+                        new PaymentSucceededEvent(
+                                payment.getOrderId(),
+                                now
+                        );
+                saveOutbox(
+                        integrationEvent,
+                        payment.getId().toString(),
+                        "payment-succeeded"
+                );
+                metrics.success().increment();
+            }else{
+                payment.markFailed();
+                PaymentFailedEvent integrationEvent =
+                        new PaymentFailedEvent(
+                                payment.getOrderId(),
+                                "Card declined",
+                                now
+                        );
+                saveOutbox(
+                        integrationEvent,
+                        payment.getId().toString(),
+                        "payment-failed"
+                );
+                metrics.failed().increment();
+            }
+        }catch (Exception e){
+            metrics.failed();
+            throw e;
+        }finally {
+            metrics.stopProcessingTimer(sample);
         }
     }
 
