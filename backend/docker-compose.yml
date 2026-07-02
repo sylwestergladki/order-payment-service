@@ -76,6 +76,8 @@ services:
     depends_on:
       - prometheus
       - tempo
+    volumes:
+      - grafana-data:/var/lib/grafana
 
   tempo:
     image: grafana/tempo:latest
@@ -85,7 +87,7 @@ services:
       - ./tempo.yml:/etc/tempo.yml
     ports:
       - "3200:3200"
-      - "4317:4317"
+      - "9095:9095"
 
   loki:
     image: grafana/loki:latest
@@ -93,6 +95,22 @@ services:
     ports:
       - "3100:3100"
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector.yml"]
+    volumes:
+      - ./otel-collector.yml:/etc/otel-collector.yml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
 volumes:
   pgdata-order:
   pgdata-payment:
+  grafana-data:
