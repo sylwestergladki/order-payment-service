@@ -28,7 +28,13 @@ management:
     endpoints:
         web:
             exposure:
-                include: "*"
-    endpoint:
-        health:
-            show-details: always
+                include: health,info,prometheus
+    tracing:
+        sampling:
+            probability: 1.0
+    otlp:
+        tracing:
+            endpoint: http://localhost:4318/v1/traces
+logging:
+    pattern:
+        level: "%5p [traceId=%X{traceId:-}, spanId=%X{spanId:-}]"

@@ -37,7 +37,9 @@ public class KafkaConfig {
     public KafkaTemplate<String, Object> kafkaTemplate(
             ProducerFactory<String, Object> producerFactory
     ) {
-        return new KafkaTemplate<>(producerFactory);
+       KafkaTemplate<String,Object> template = new KafkaTemplate<>(producerFactory);
+       template.setObservationEnabled(true);
+       return template;
     }
 
 
@@ -113,6 +115,7 @@ public class KafkaConfig {
 
         var factory = new ConcurrentKafkaListenerContainerFactory<String, PaymentSucceededEvent>();
         factory.setConsumerFactory(cf);
+        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 

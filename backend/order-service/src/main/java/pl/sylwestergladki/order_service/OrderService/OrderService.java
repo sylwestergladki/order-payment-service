@@ -1,8 +1,6 @@
 package pl.sylwestergladki.order_service.OrderService;
 
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;

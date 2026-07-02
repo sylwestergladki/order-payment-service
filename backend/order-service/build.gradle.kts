@@ -28,6 +28,12 @@ dependencies {
 
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 
+	implementation("io.micrometer:micrometer-tracing-bridge-otel")
+	implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+
+	implementation("io.micrometer:micrometer-observation")
+	implementation("io.micrometer:micrometer-observation-bridge")
+
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
 	runtimeOnly("org.postgresql:postgresql:42.7.3")
