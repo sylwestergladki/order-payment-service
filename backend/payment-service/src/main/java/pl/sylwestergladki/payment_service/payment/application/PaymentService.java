@@ -80,7 +80,7 @@ public class PaymentService {
                         payment.getId().toString(),
                         "payment-succeeded"
                 );
-                metrics.success().increment();
+                metrics.incrementSuccess();
             }else{
                 payment.markFailed();
                 PaymentFailedEvent integrationEvent =
@@ -94,10 +94,10 @@ public class PaymentService {
                         payment.getId().toString(),
                         "payment-failed"
                 );
-                metrics.failed().increment();
+                metrics.incrementFailed();
             }
         }catch (Exception e){
-            metrics.failed();
+            metrics.incrementFailed();
             throw e;
         }finally {
             metrics.stopProcessingTimer(sample);

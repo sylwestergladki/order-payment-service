@@ -11,7 +11,6 @@ public class PaymentMetrics {
     private final Counter successCounter;
     private final Counter failedCounter;
     private final Timer processingTimer;
-    private final Timer createTimer;
 
     public PaymentMetrics(MeterRegistry registry) {
         this.registry = registry;
@@ -25,10 +24,6 @@ public class PaymentMetrics {
 
         this.processingTimer = Timer.builder("payments_processing_time")
                 .description("Payment processing time")
-                .register(registry);
-
-        this.createTimer = Timer.builder("order.create.time")
-                .description("Time to create order")
                 .register(registry);
     }
 
@@ -50,5 +45,13 @@ public class PaymentMetrics {
 
     public void stopProcessingTimer(Timer.Sample sample) {
         sample.stop(processingTimer);
+    }
+
+    public void incrementSuccess() {
+        successCounter.increment();
+    }
+
+    public void incrementFailed() {
+        failedCounter.increment();
     }
 }
