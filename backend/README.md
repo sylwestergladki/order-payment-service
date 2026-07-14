@@ -1,57 +1,87 @@
 # order-payment-service
-## ARCHITECTURE
-Client -> Controller -> Service -> Domain -> Repository -> Database
-Simple monolithic Spring Boot application with layered architecture and domain-driven business logic
-## MAIN FLOWS
-### CREATE ORDER
-1. Client
-2. OrderController
-3. OrderService
-4. Order.create(amount)   ← logika domenowa
-5. OrderRepository.save()
-6. Database
-7. return Order (NEW)
-### PAYMENT
-1. Client
-2. PaymentController
-3. PaymentService
-4. OrderService.getOrder(orderId)
-5. Order.markAsPaid() / markAsFailed()
-6. OrderRepository.save()
-7. PaymentRepository.save()
-8. Database
-### GET ORDER
-1. Client
-2. OrderController
-3. OrderService
-4. OrderRepository.findById()
-5. Database
-6. return Order
-### GET ALL ORDERS
-1. Client
-2. OrderController
-3. OrderService
-4. OrderRepositor.findAll()
-5. Database
-6. Return List<Order>
-### PAYMENT FAILURE
-1. Client
-2. PaymentController
-3. PaymentService
-4. OrderService.getOrder()
-5. Order.markAsFailed()
-6. OrderRepository.save()
-7. PaymentRepository.save()
-### INVALID ORDER
-1. Client
-2. OrderController
-3. OrderService
-4. Order.create(amount)
-5. InvalidOrderAmountException
-6. ControllerAdvice (jeśli masz)
-7. HTTP 400
+## Technologies
+- Java 21
+- Spring Boot 3
+- Spring Data JPA
+- Apache Kafka
+- PostgreSQL
+- Redis
+- Docker & Docker Compose
+- Micrometer + Prometheus
+
+## Architecture
+The application consists of two independent microservices:
+
+- **Order Service** – implemented using the **Layered Architecture** pattern.
+- **Payment Service** – implemented using the **Hexagonal (Ports and Adapters) Architecture** pattern.
+
+Both services are containerized and run together using a single **Docker Compose** configuration. Supporting infrastructure (such as Kafka and the database) is also managed by Docker Compose.
+
+## Communication
+The services communicate asynchronously through **Apache Kafka**.
+
+```mermaid
+flowchart LR
+    Client --> OrderService
+    OrderService -->|OrderCreated| Kafka
+    Kafka --> PaymentService
+    PaymentService -->|PaymentSucceeded / PaymentFailed| Kafka
+    Kafka --> OrderService
+```
+
+Communication flow:
+1. Order Service creates a new order.
+2. Order Service publishes an `OrderCreated` event to Kafka.
+3. Payment Service consumes the event and processes the payment.
+4. Payment Service publishes either a `PaymentSucceeded` or `PaymentFailed` event.
+5. Order Service consumes the payment event and updates the order status.
+
+This event-driven approach keeps the services loosely coupled and allows them to operate independently.
+
+### Order Service (Layered Architecture)
+The Order Service follows the traditional layered architecture:
+- **Controller** – handles HTTP requests.
+- **Service** – contains business logic.
+- **Repository** – handles data persistence.
+- **Entity** – represents the domain model.
+
+### Payment Service (Hexagonal Architecture)
+The Payment Service follows the Hexagonal (Ports and Adapters) Architecture. Besides the core hexagonal layers, it contains dedicated modules for messaging and the Transactional Outbox pattern.
+
+- **api** – REST controllers and Kafka consumers that receive incoming requests and events.
+- **application** – application use cases that orchestrate the business workflow.
+- **domain** – business entities, domain services, and port interfaces.
+- **infrastructure** – implementations of persistence, messaging, and external integrations.
+- **messaging** – Kafka producers and consumers responsible for asynchronous communication.
+- **outbox** – implementation of the Transactional Outbox pattern, ensuring reliable event publishing.
 
 ## DOMAIN RULES
-- Order cannot have negative amount
-- Order can be NEW -> PAID or FAILED
-- Paid order cannot be failed
+- Order amount cannot be negative.
+- Order status can change only from `NEW` to `PAID` or `FAILED`.
+- A `PAID` order cannot transition to `FAILED`.
+
+## Metrics (Prometheus)
+### Order Service
+| Metric | Description |
+|--------|-------------|
+| `order_total` | Orders created |
+| `order_create_time_seconds` | Order creation time |
+| `order_create_time_seconds_max` | Maximum order creation time |
+| `order_failed_total` | Failed orders |
+| `order_succeeded_total` | Successful orders |
+### Payment Service
+| Metric | Description |
+|--------|-------------|
+| `payments_processing_time_seconds` | Payment processing time |
+| `payments_processing_time_seconds_max` | Maximum payment processing time |
+| `payments_failed_total` | Failed payments |
+| `payments_success_total` | Successful payments |
+
+## Running the application
+```bash
+docker compose up --build
+```
+After startup:
+- Order Service: `http://localhost:8080`
+- Payment Service: `http://localhost:8082`
+- Prometheus metrics: `/actuator/prometheus`
