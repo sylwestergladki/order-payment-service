@@ -32,7 +32,7 @@ dependencies {
 	implementation("io.opentelemetry:opentelemetry-exporter-otlp")
 
 	implementation("io.micrometer:micrometer-observation")
-	implementation("io.micrometer:micrometer-observation-bridge")
+
 
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 

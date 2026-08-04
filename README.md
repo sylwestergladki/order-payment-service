@@ -23,10 +23,28 @@ The services communicate asynchronously through **Apache Kafka**.
 ```mermaid
 flowchart LR
     Client --> OrderService
-    OrderService -->|OrderCreated| Kafka
-    Kafka --> PaymentService
-    PaymentService -->|PaymentSucceeded / PaymentFailed| Kafka
-    Kafka --> OrderService
+
+    subgraph Order
+        OrderService
+        OrderDB[(Order DB)]
+        OrderService <--> OrderDB
+    end
+
+    subgraph Payment
+        PaymentService
+        PaymentDB[(Payment DB)]
+        PaymentService <--> PaymentDB
+    end
+
+    EventBus[(Kafka)]
+
+    OrderService -->|OrderCreated| EventBus
+    EventBus -->|OrderCreated| PaymentService
+
+    PaymentService -->|PaymentSucceeded| EventBus
+    PaymentService -->|PaymentFailed| EventBus
+
+    EventBus -->|PaymentSucceeded / PaymentFailed| OrderService
 ```
 
 Communication flow:
@@ -79,6 +97,7 @@ The Payment Service follows the Hexagonal (Ports and Adapters) Architecture. Bes
 
 ## Running the application
 ```bash
+cd backup
 docker compose up --build
 ```
 After startup:

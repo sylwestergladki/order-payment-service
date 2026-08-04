@@ -110,6 +110,50 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    container_name: payment-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - kafka
+      - payment-postgres
+      - otel-collector
+    environment:
+      DB_HOST: payment-postgres
+      DB_PORT: 5432
+      DB_NAME: paymentdb
+      DB_USER: payment
+      DB_PASSWORD: payment
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4318/v1/traces
+
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+      - otel-collector
+    environment:
+      DB_HOST: order-postgres
+      DB_PORT: 5432
+      DB_NAME: orderdb
+      DB_USER: order
+      DB_PASSWORD: order
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4318/v1/traces
+
+
 volumes:
   pgdata-order:
   pgdata-payment:

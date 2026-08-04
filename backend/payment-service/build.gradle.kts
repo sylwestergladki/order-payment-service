@@ -36,7 +36,6 @@ dependencies {
 	implementation("io.opentelemetry:opentelemetry-exporter-otlp")
 
 	implementation("io.micrometer:micrometer-observation")
-	implementation("io.micrometer:micrometer-observation-bridge")
 
 	compileOnly("org.projectlombok:lombok:1.18.32")
 	annotationProcessor("org.projectlombok:lombok:1.18.32")
