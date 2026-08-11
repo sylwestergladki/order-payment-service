@@ -37,3 +37,24 @@ jobs:
 
       - name: Build and test
         run: ./gradlew clean test
+
+      - name: Build applications
+        run: ./gradlew build
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start infrastructure
+        run: docker compose up -d
+
+      - name: Check containers
+        run: docker compose ps
+
+      - name: Smoke test
+        run: |
+          curl --fail http://localhost:8080/actuator/health
+          curl --fail http://localhost:8082/actuator/health
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
