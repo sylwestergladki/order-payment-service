@@ -50,6 +50,26 @@ jobs:
       - name: Check containers
         run: docker compose ps
 
+      - name: Wait for services
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:8080/actuator/health; then
+              echo "8080 is ready"
+              break
+            fi
+            echo "Waiting for 8080..."
+            sleep 2
+          done
+
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:8082/actuator/health; then
+              echo "8082 is ready"
+              break
+            fi
+            echo "Waiting for 8082..."
+            sleep 2
+          done
+
       - name: Smoke test
         run: |
           curl --fail http://localhost:8080/actuator/health
